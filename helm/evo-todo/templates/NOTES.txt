@@ -1,0 +1,33 @@
+============================================================
+  Evolution Todo App — Deployed!
+============================================================
+
+Namespace: {{ .Release.Namespace }}
+Release:   {{ .Release.Name }}
+
+{{- if .Values.ingress.enabled }}
+
+Access the app via ingress:
+  http://{{ .Values.ingress.host }}
+
+Make sure to add the hosts entry:
+  <minikube-ip> {{ .Values.ingress.host }}
+
+{{- end }}
+
+Port-forward for quick access:
+  kubectl port-forward svc/{{ include "evo-todo.fullname" . }} 8080:{{ .Values.service.port }} -n {{ .Release.Namespace }}
+  Then open: http://localhost:8080
+
+Check status:
+  kubectl get all -n {{ .Release.Namespace }}
+  helm status {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+{{- if .Values.autoscaling.enabled }}
+
+Autoscaling:
+  Min replicas: {{ .Values.autoscaling.minReplicas }}
+  Max replicas: {{ .Values.autoscaling.maxReplicas }}
+  Target CPU:   {{ .Values.autoscaling.targetCPU }}%
+  kubectl get hpa -n {{ .Release.Namespace }}
+{{- end }}

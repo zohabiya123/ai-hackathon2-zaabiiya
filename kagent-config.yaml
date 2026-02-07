@@ -1,0 +1,89 @@
+apiVersion: kagent.dev/v1alpha1
+kind: Agent
+metadata:
+  name: evo-todo-agent
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: evo-todo
+    app.kubernetes.io/managed-by: kagent
+spec:
+  description: >
+    AI agent for monitoring and managing the Evolution Todo App
+    Kubernetes deployment. Watches the evo-todo namespace for
+    health issues, resource anomalies, and deployment failures.
+
+  model:
+    provider: openai
+    name: gpt-4
+
+  systemPrompt: |
+    You are a Kubernetes operations agent for the Evolution Todo App.
+    The app is a static React SPA served by nginx in the 'evo-todo' namespace.
+    Key resources: Deployment (2 replicas), Service (ClusterIP:80), Ingress, HPA.
+    Image: evo-todo:latest (nginx:1.27-alpine based, <25MB).
+    Health endpoint: GET /index.html on port 80.
+    Focus on: pod health, nginx errors, resource utilization, scaling events.
+
+  tools:
+    - name: k8s
+      config:
+        namespaces:
+          - evo-todo
+        allowedOperations:
+          - get
+          - list
+          - describe
+          - logs
+          - top
+    - name: prometheus
+      config:
+        endpoint: "http://prometheus-server.monitoring:9090"
+        queries:
+          - name: pod_cpu
+            promql: 'sum(rate(container_cpu_usage_seconds_total{namespace="evo-todo"}[5m])) by (pod)'
+          - name: pod_memory
+            promql: 'sum(container_memory_working_set_bytes{namespace="evo-todo"}) by (pod)'
+          - name: nginx_requests
+            promql: 'sum(rate(nginx_http_requests_total{namespace="evo-todo"}[5m]))'
+
+  triggers:
+    - type: schedule
+      interval: 5m
+      action: healthCheck
+      description: "Periodic health check of all evo-todo pods"
+
+    - type: event
+      resource: pods
+      namespace: evo-todo
+      eventType: Warning
+      action: diagnose
+      description: "Auto-diagnose pod warning events"
+
+    - type: event
+      resource: deployments
+      namespace: evo-todo
+      eventType: Normal
+      condition: "reason=ScalingReplicaSet"
+      action: logScaling
+      description: "Log HPA scaling events"
+
+  actions:
+    healthCheck:
+      steps:
+        - "Check all pods in evo-todo namespace are Running and Ready"
+        - "Verify service endpoints are populated"
+        - "Check HPA current vs desired replicas"
+        - "Report any pods in CrashLoopBackOff or Pending state"
+
+    diagnose:
+      steps:
+        - "Get pod events and logs for the affected pod"
+        - "Check resource limits vs actual usage"
+        - "Identify root cause (OOM, image pull, probe failure, etc.)"
+        - "Suggest remediation steps"
+
+    logScaling:
+      steps:
+        - "Record scaling event with timestamp and replica count"
+        - "Check if scaling is due to CPU threshold breach"
+        - "Report if max replicas reached"

@@ -1,0 +1,50 @@
+# Default values for evo-todo Helm chart
+
+replicaCount: 2
+
+image:
+  repository: evo-todo
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  host: evo-todo.local
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPU: 70
+
+probes:
+  liveness:
+    path: /index.html
+    initialDelaySeconds: 10
+    periodSeconds: 30
+  readiness:
+    path: /index.html
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  startup:
+    path: /index.html
+    periodSeconds: 5
+    failureThreshold: 3
+
+nginx:
+  gzip: true

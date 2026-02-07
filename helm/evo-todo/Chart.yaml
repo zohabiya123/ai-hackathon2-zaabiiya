@@ -1,0 +1,13 @@
+apiVersion: v2
+name: evo-todo
+description: Evolution Todo App — React SPA served by nginx on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - todo
+  - react
+  - spa
+  - nginx
+maintainers:
+  - name: Evolution Team

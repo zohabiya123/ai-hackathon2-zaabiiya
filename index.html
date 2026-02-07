@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evolution Todo</title>
+    <script>
+      // Prevent theme flash — apply saved theme before render
+      const saved = localStorage.getItem('evo_theme');
+      if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
